@@ -1,0 +1,15 @@
+#grid-container {
+    display: grid;
+    padding-left: 100px;
+  }
+  
+  .cell {
+      border-color:red ;
+      background-color: black;
+  }
+  .cell_0{
+      background-color : yellow;
+  }
+  .cell_end{
+      background-color: green;
+  }
