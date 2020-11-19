@@ -9,26 +9,55 @@ $.getJSON("./data/labyrinthes.json", function (data) {
   console.log("An error has occurred.");
 });
 
-//===============================
-//      LOAD
-//===============================
+//******************************************************************************************************* */
 
 $(document).ready(function () {
+  //===================================
+  //    functions to animate display
+  //===================================
   let displayBuffer = [];
+  let displayBufferChemin = [];
 
-  //======  get Maze  ============
+  const startDisplay = () => {
+    setInterval(() => {
+      $("#id_" + displayBuffer.shift()).addClass("good");
+    }, 500);
+    setTimeout(()=> {
+      setInterval(() => {
+        $("#id_" + displayBufferChemin.shift()).addClass("best_way");
+      }, 500);
+    }, 500*displayBuffer.length);
+
+  };
+
+  const displayChemin = (end_id, maze) => {
+    let id = end_id;
+    while (id != 0) {
+      console.log(maze[id].parent);
+      displayBufferChemin.push(id);
+      id = maze[id].parent;
+    }
+    displayBufferChemin.push(id);
+  }
+
+
+  //===================================
+  //    GetMaze
+  //===================================
   const getMaze = (param1, param2) => {
     return allData[param1][param2];
   };
 
-  //======  Clear ============
+  //===================================
+  //    Clear element
+  //===================================
   const clear = (element) => {
     $(`${element}`).remove();
   };
 
   //===========================================================
   //      function isReady to prepare display form MazeChoice
-  //================================================================
+  //===========================================================
   const isReady = () => {
     $("#mazeChoice").append(`<option selected disabled>Chose maze</option>`);
     for (const size in allData) {
@@ -40,7 +69,7 @@ $(document).ready(function () {
     }
   };
 
-  //=======================================================
+  //==========================================================
   //      function click on isReady button to display form
   //==========================================================
   $("#isReady").click(function () {
@@ -50,7 +79,7 @@ $(document).ready(function () {
     console.log(allData);
   });
 
-  //=======================================================
+  //==========================================================
   //      function on change on mazeChoice to display option
   //===========================================================
   $("#mazeChoice").on("change", function () {
@@ -63,7 +92,7 @@ $(document).ready(function () {
     }
   });
 
-  //==========================================================
+  //==============================================================
   //      function on change on mazeSelected to display Maze
   //===============================================================
   let mazeSelected;
@@ -120,11 +149,9 @@ $(document).ready(function () {
     }
   }
 
-  //=========================================================
-  //=========================   DFS   =======================
-  //=========================================================
+  //**************************   Functions for  DFS  ******************************************* */
 
-  //==================================
+  //====================================
   //      function on click on DFS do
   //====================================
   $("#DFS").click(function () {
@@ -136,20 +163,16 @@ $(document).ready(function () {
     startDisplay();
   });
 
-  //===============================
-  //      function neighbours
-  //===============================
+  //===================================================
+  //      function neighbours return array of index
+  //===================================================
   const neighbours = (maze, size, cell) => {
     const neighbours = [];
 
     const index_cell = maze.indexOf(cell);
-    // console.log("index_cell : " + index_cell);
-    // console.log("indexOf cell : " + maze.indexOf(cell));
-    // console.log("size : " + size);
-
     size = parseInt(size);
 
-    //define neighbours top, right, bottom, left
+    //define index of neighbours top, right, bottom, left
     let top_cell;
     if (index_cell > size) {
       top_cell = index_cell - size;
@@ -164,7 +187,7 @@ $(document).ready(function () {
 
     let left_cell = index_cell - 1;
 
-    //push neighbour in neighbours array
+    //push neighbour's index in neighbours array
     if (cell.walls[0] == false && top_cell) {
       neighbours.push(top_cell);
     }
@@ -181,55 +204,68 @@ $(document).ready(function () {
     return neighbours;
   };
 
-  //=========   DFS   ==================
+  //============================
+  //         DFS
+  //============================
+
+
 
   const dfs = (size, maze) => {
     console.log("----------DFS---------------");
-    const start = maze[0];
 
+    //initiate new key isVisited=false for each cell of maze
     for (let i = 0; i < maze.length; i++) {
       maze[i].isVisited = false;
     }
 
+    //declare stack and push into start_cell
+    const start = maze[0];
     let stack = [];
     stack.push(start);
     start.isVisited = true;
 
+    //while stack is not empty do
     while (stack.length != 0) {
+      //get the last element from stack
       let current_cell = stack.pop();
       displayBuffer.push(maze.indexOf(current_cell));
+      //if current_cell is the last cell of maze you win !
       if (current_cell == maze[maze.length - 1]) {
         console.log("WIN");
+        console.log(`curent_cell : ${maze.indexOf(current_cell)}`);
+        console.log(`parent de current_cell : ${current_cell.parent}`)
+        displayChemin(maze.indexOf(current_cell), maze);
         return;
       }
+      //get array of neighbours of current_cell
       let arrayNeighbours = neighbours(maze, size, current_cell);
       console.log("arrayNeighbours : " + arrayNeighbours);
 
+      //for each neighbour do
       arrayNeighbours.forEach((neighbour) => {
         console.log("neighbour : " + neighbour);
+
+        //if neighbour is not visited : push it in stack and declare it as visited
         if (maze[neighbour].isVisited === false) {
           console.log("neighbour : " + neighbour);
+          maze[neighbour].parent=maze.indexOf(current_cell);
+
           stack.push(maze[neighbour]);
           maze[neighbour].isVisited = true;
         }
+
       });
 
     }
+
     return false;
   };
 
-  const startDisplay = () => {
-    setInterval(() => {
-      $("#id_" + displayBuffer.shift()).addClass("good");
-    }, 500);
-  };
 
-  //========================================================
-  //      BFS
-  //=======================================================
+  //**************************   Functions for  BFS  ******************************************* */
 
-  //==================================
-  //      function on click on DFS do
+  //====================================
+  //      function on click on BFS do
   //====================================
   $("#BFS").click(function () {
     let size = $("#mazeChoice").val();
@@ -240,7 +276,9 @@ $(document).ready(function () {
     startDisplay();
   });
 
-  //====    BFS   ==============
+  //============================
+  //         BFS
+  //============================
 
   const bfs = (size, maze) => {
     console.log("----------BFS---------------");
@@ -259,6 +297,7 @@ $(document).ready(function () {
       displayBuffer.push(maze.indexOf(current_cell));
       if (current_cell == maze[maze.length - 1]) {
         console.log("WIN");
+        displayChemin(maze.indexOf(current_cell), maze);
         return;
       }
       let arrayNeighbours = neighbours(maze, size, current_cell);
@@ -269,6 +308,8 @@ $(document).ready(function () {
 
         if (maze[neighbour].isVisited === false) {
           console.log("neighbour : " + neighbour);
+          maze[neighbour].parent=maze.indexOf(current_cell);
+
           queue.push(maze[neighbour]);
           maze[neighbour].isVisited = true;
         }
